@@ -162,18 +162,34 @@ object FirstClassFunctionTest {
   }
   
   def testClosures {
+    println("== testClosures ==")
     // (x: Int) => x + more
     // more: free variable, x: bound variable
     // 위 함수를 아무데서나 사용할 수는 없다. more 때문이다.
     var more = 1
     val addMore = (x:Int) => x + more
-    addMore(10) // 11
+    println(addMore(10)) // 11
     
     // 위와 같은 function literal에 의해 실행시간에 만들어진 function value가 closure.
     // 자유변수를 캡처함으로써, function literal을 닫는다(closing)는 뜻.
-    
-    
-    
+
+    // free variable 값이 바뀌어도 바뀐 값을 가져온다.
+    more = 9999
+    println(addMore(10)) // 10009
+
+    // Intuitively, Scala’s closures capture variables themselves, not the value to which variables refer.
+    // 자바 inner class의 경우 final의 경우에만 허용하기 때문에 이 차이가 의미 없다.
+    val someNumbers = List(-11, -10, -5, 0, 5, 10)
+    var sum = 0
+    someNumbers.foreach(sum += _)
+    println(sum)
+
+    // 아래에서 more는 closure 생성시 사용된 more가 유지된다.
+    def makeIncreaser(more: Int) = (x: Int) => x + more
+    val inc1 = makeIncreaser(1)
+    val inc9999 = makeIncreaser(9999)
+    println(inc1(10))
+    println(inc9999(10))
   }
 }
 
