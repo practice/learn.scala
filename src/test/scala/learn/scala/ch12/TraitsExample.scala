@@ -1,5 +1,6 @@
 package learn.scala.ch12
 
+import learn.scala.ch6.Rational
 import org.scalatest.{Matchers, FlatSpec}
 
 /**
@@ -38,12 +39,65 @@ class TraitsExample extends FlatSpec with Matchers {
   }
 
   "Thin versus rich interfaces" should "One major use of traits is to automatically add methods to a class in terms of methods the class already has. " +
-    "That is, traits can enrich a thin interface, making it into a rich interface." in {
-
+    "That is, traits can enrich a thin interface, making it into a rich interface." +
     "To enrich an interface using traits, simply define a trait with a small number of " +
-      "abstract methods - the thin part of the trait’s interface - and a potentially large " +
-      "number of concrete methods, all implemented in terms of the abstract methods. " +
-      "Then you can mix the enrichment trait into a class, implement the thin portion of the interface, " +
-      "and end up with a class that has all of the rich interface available."
+    "abstract methods - the thin part of the trait’s interface - and a potentially large " +
+    "number of concrete methods, all implemented in terms of the abstract methods. " +
+    "Then you can mix the enrichment trait into a class, implement the thin portion of the interface, " +
+    "and end up with a class that has all of the rich interface available." in {
   }
+
+  "Example Rectangular Objects" should "아래 코드에서 left, right, width...같은 중복을 enrichment trait을 이용하여 제거해보자." in {
+    class Point(val x: Int, val y: Int)
+    class RectangleNoTrait(val topLeft: Point, val bottomRight: Point) {
+      def left = topLeft.x
+      def right = bottomRight.x
+      def width = right - left
+      // and many more geometric methods...
+    }
+    abstract class ComponentNoTrait {
+      def topLeft: Point
+      def bottomRight: Point
+
+      def left = topLeft.x
+      def right = bottomRight.x
+      def width = right - left
+      // and many more geometric methods...
+    }
+  }
+
+  it should "super class를 만들듯이 trait를 만들면 된다." in {
+    class Point(val x: Int, val y: Int)
+    trait Rectangular {
+      def topLeft: Point
+      def bottomRight: Point
+
+      def left = topLeft.x
+      def right = bottomRight.x
+      def width = right - left
+      // and many more ...
+    }
+
+    abstract class Component extends Rectangular {
+      // ...
+    }
+
+    class Rectangle(val topLeft: Point, val bottomRight: Point) extends Rectangular {
+      // ...
+    }
+
+    val rect: Rectangle = new Rectangle(new Point(1,1), new Point(10,10))
+    rect.left should be (1)
+    rect.right should be (10)
+    rect.width should be (9)
+  }
+
+  "The Ordered trait" should "Rational 클래스가 Ordered trait를 상속함" in {
+    val half = new Rational(1,2)
+    val third = new Rational(1,3)
+    (half < third) should be (false)
+    (half > third) should be (true)
+  }
+
+  
 }
