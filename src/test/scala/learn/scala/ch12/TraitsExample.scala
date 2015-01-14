@@ -3,6 +3,8 @@ package learn.scala.ch12
 import learn.scala.ch6.Rational
 import org.scalatest.{Matchers, FlatSpec}
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
  * Created by shawn on 15. 1. 13..
  */
@@ -99,5 +101,65 @@ class TraitsExample extends FlatSpec with Matchers {
     (half > third) should be (true)
   }
 
-  
+  abstract class IntQueue {
+    def put(x: Int)
+    def get(): Int
+  }
+  class BasicIntQueue extends IntQueue {
+    private val buf = new ArrayBuffer[Int]
+    override def put(x: Int): Unit = buf += x
+    override def get(): Int = buf.remove(0)
+  }
+
+  /**
+   * 1. trait가 IntQueue를 상속함에 주의. 이 trait는 IntQueue 하위 클래스에만 mixin 할 수 있음.
+   * BasicIntQueue에만 mixin할 수 있고 Rational 클래스에는 안됨.
+   * 2. abstract 메소드에서 super 호출을 하고 있음. 여기서 super는 동적바인딩 됨에 주의. super.put이 구현된 구체클래스에 mixin할 때에 성공함.
+   * 그래서 abstract override 라고 지정함. abstract override는 trait에서만 가능함.
+   */
+  trait Doubling extends IntQueue {
+    abstract override def put(x: Int) { super.put(x * 2) }
+  }
+
+  "Traits as stackable modification" should "trait가 추상클래스를 상속하고, 기존 메소드를 override함" in {
+    // trait 없이 평이한 사용
+    val queue = new BasicIntQueue
+    queue.put(10)
+    queue.put(20)
+    queue.get() should be (10)
+    queue.get() should be (20)
+
+    // 이제 Doubling을 이용하자.
+    class MyQueue extends BasicIntQueue with Doubling
+
+    val myQueue = new MyQueue()
+
+    myQueue.put(10)
+    myQueue.get() should be (20)
+
+    // MyQueue는 클래스 body가 없으므로 간단히 아래와 같이
+    val oneLineQueue = new BasicIntQueue with Doubling
+    oneLineQueue.put(20)
+    oneLineQueue.get() should be (40)
+  }
+
+  trait Incrementing extends IntQueue {
+    abstract override def put(x: Int) { super.put(x + 1) }
+  }
+  trait Filtering extends IntQueue {
+    abstract override def put(x: Int) { if (x >= 0) super.put(x) }
+  }
+  it should "Incrementing, Filtering trait 구현" in {
+      val queue = new BasicIntQueue with Incrementing with Filtering
+      queue.put(-1); queue.put(0); queue.put(1);
+      queue.get() should be (1)
+      queue.get() should be (2)
+  }
+  it should "trait 순서는 중요함. 뒤쪽 trait가 먼저 호출됨." in {
+    val queue = new BasicIntQueue with Filtering with Incrementing
+    queue.put(-1); queue.put(0); queue.put(1);
+    queue.get() should be (0)
+    queue.get() should be (1)
+    queue.get() should be (2)
+  }
 }
