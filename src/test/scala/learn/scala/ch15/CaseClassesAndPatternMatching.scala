@@ -1,6 +1,10 @@
 package learn.scala.ch15
 
+import learn.scala.ch10.Element
+import learn.scala.ch10.Element._
 import org.scalatest.{Matchers, FlatSpec}
+
+import scala.collection.immutable.{IndexedSeq}
 
 /**
  * Created by shawn on 15. 1. 16..
@@ -162,6 +166,98 @@ class CaseClassesAndPatternMatching extends FlatSpec with Matchers {
   }
 
   "Sealed classes" should "" in {
-    
+
+  }
+
+  "Patterns everywhere" should "patterns in variable definitions" in {
+    val (number, string) = (123, "abc")
+    number should be (123)
+    string should be ("abc")
+
+    val BinOp(op, left, right) = BinOp("*", Number(5), Number(1))
+    op should be ("*")
+    left should be (Number(5))
+    right should be (Number(1))
+  }
+
+  it should "Case sequences as partial functions" in {
+    def withDefault: Option[Int] => Int = {
+      case Some(x) => x     // case 하나를 function literal로 볼 수 있다. 패턴은 파라미터, 오른쪽은 body.
+      case None => 0
+    }
+
+    withDefault(Some(10)) should be (10)
+    withDefault(None) should be (0)
+
+    // a sequence of cases gives you a partial function. 이거 무슨 말인지 모르겠다.
+    // see also http://twitter.github.io/scala_school/ko/pattern-matching-and-functional-composition.html
+    // ...
+  }
+
+  it should "Patterns in for expressions: generated values that do not match the pattern are discarded" in {
+    val capitals = Map("France" -> "Paris", "Japan" -> "Tokyo")
+    val cities = for ((country, city) <- capitals) yield s"$country-$city"
+    cities.size should be (2)
+    cities.head should be ("France-Paris")
+    cities.drop(1).head should be ("Japan-Tokyo")
+
+    val results = List(Some("apple"), None, Some("orange"))
+    val fruits = for (Some(fruit) <- results) yield fruit
+    fruits.size should be (2)
+    fruits.head should be ("apple")
+    fruits.drop(1).head should be ("orange")
+  }
+
+  "A larger example" should "" in {
+    class ExprFormatter {
+      // Contains operators in groups of increasing precedence
+      private val opGroups = Array(
+        Set("|", "||"),
+        Set("&", "&&"),
+        Set("^"),
+        Set("==", "!="),
+        Set("<", "<=", ">", ">="),
+        Set("+", "-"),
+        Set("*", "%")
+      )
+      private val precedence = {
+        val assocs: IndexedSeq[(String, Int)] = for {
+          i <- 0 until opGroups.length
+          op <- opGroups(i)
+        } yield op -> i   // the association op -> i is nothing else but the pair (op, i)
+        assocs.toMap
+      }
+
+      private val unaryPrecedence = opGroups.length
+      private val fractionPrecedence = -1
+
+      private def format(e: Expr, enclPrec: Int): Element =
+        e match {
+          case Var(name) =>
+            elem(name)
+          case Number(num) =>
+            def stripDot(s: String) =
+              if (s endsWith ".0") s.substring(0, s.length - 2)
+              else s
+            elem(stripDot(num.toString))
+          case UnOp(op, arg) =>
+            elem(op) beside format(arg, unaryPrecedence)
+          case BinOp("/", left, right) =>
+            val top = format(left, fractionPrecedence)
+            val bot = format(right, fractionPrecedence)
+            val line = elem('-', top.width max bot.width, 1)
+            val frac = top above line above bot
+            if (enclPrec != fractionPrecedence) frac
+            else elem(" ") beside frac beside elem(" ")
+          case BinOp(op, left, right) =>
+            val opPrec = precedence(op)
+            val l = format(left, opPrec)
+            val r = format(right, opPrec + 1)
+            val oper = l beside elem(" "+ op +" ") beside r
+            if (enclPrec <= opPrec) oper
+            else elem("(") beside oper beside elem(")")
+        }
+      def format(e: Expr): Element = format(e, 0)
+    }
   }
 }
