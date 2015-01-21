@@ -201,4 +201,56 @@ class WorkingWithLists extends FlatSpec with Matchers {
     abcde.addString(buf, "(", ";", ")")
     buf.result() should be ("(a;b;c;d;e)")
   }
+
+  it should "Converting lists: iterator, toArray, copyToArray" in {
+    abcde.toArray should be (Array('a', 'b', 'c', 'd', 'e'))
+    abcde.toArray.toList should be (abcde)
+
+    // copyToArray
+    val arr2 = new Array[Int](10)
+    arr2 should be (Array(0,0,0,0,0,0,0,0,0,0))
+    List(1,2,3).copyToArray(arr2, 3)
+    arr2 should be (Array(0,0,0,1,2,3,0,0,0,0))
+
+    // list iterator
+    val it: Iterator[Char] = abcde.iterator
+    it.next should be ('a')
+    it.next should be ('b')
+  }
+
+  it should "Example: Merge sort" in {
+    /**
+     * Complexity: order (n log(n))
+     * @param less
+     * @param xs
+     * @tparam T
+     * @return
+     */
+    def msort[T](less: (T, T) => Boolean)(xs: List[T]): List[T] = {
+      def merge(xs: List[T], ys: List[T]): List[T] = {
+        (xs, ys) match {
+          case (Nil, _) => ys
+          case (_, Nil) => xs
+          case (x :: xs1, y :: ys1) =>
+            if (less(x, y)) x :: merge(xs1, ys)
+            else y :: merge(xs, ys1)
+        }
+      }
+      val n = xs.length / 2
+      if (n == 0) xs
+      else {
+        val (ys, zs) = xs.splitAt(n)
+        merge(msort(less)(ys), msort(less)(zs))
+      }
+    }
+    msort((x: Int, y: Int) => x < y)(3::5::1::9::6::Nil) should be (1::3::5::6::9::Nil)
+
+    // The msort function is a classical example of the currying
+    val intSort = msort((x: Int, y: Int) => x < y) _
+    val reverseIntSort = msort((x: Int, y: Int) => x > y) _
+
+    val mixedInts = List(4, 1, 9, 0, 5, 8, 3, 6, 2, 7)
+    intSort(mixedInts) should be (List(0, 1, 2, 3, 4, 5, 6, 7, 8, 9))
+    reverseIntSort(mixedInts) should be (List(9, 8, 7, 6, 5, 4, 3, 2, 1, 0))
+  }
 }
