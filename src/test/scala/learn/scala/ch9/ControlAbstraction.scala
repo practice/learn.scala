@@ -73,7 +73,7 @@ class ControlAbstraction extends FlatSpec with Matchers {
   "Reducing code duplication" should "" in {
   }
 
-  "Curring" should "()로 구분된 파라미터 목록이 여러개 임. ()가 여러개임." in {
+  "Curring" should "()로 구분된 파라미터 목록을 여러개 사용하는 함수. ()가 여러개임." in {
     def curriedSum(x: Int)(y: Int) = x + y
 
     curriedSum(3)(8) should be (11)
@@ -81,11 +81,22 @@ class ControlAbstraction extends FlatSpec with Matchers {
     val addOne = curriedSum(1)_
     addOne(2) should be (3)
 
-    // curriedSum()() 과 같은 형식은 function value를 리턴하는 함수를 정의하는 것으로 생각할 수 있다. 하지만 여러개의 ()를 사용함으로써,
+    // curriedSum()() 과 같은 형식은 두 번의 함수호출로 생각할 수 있다. 첫번째 호출은 x를 받아서 function value를 만들어준다.
+    // 두번째 함수호출은 y를 받는다.
+    // 하지만 여러개의 ()를 사용함으로써,
     // 좀 더 간단히 partially applied function을 만들 수 있게 해 준다.
+    /**
+     * 두번의 함수중 첫번째는 이런 모양의 호출로 볼 수 있다.
+     */
     def first(x: Int) = (y: Int) => x + y // first: (x: Int)(Int) => Int
+    /**
+     * 두번째 함수
+     */
     val second = first(1) // second: (Int) => Int = <function1>
     second(5) should be (6)
+
+    val onePlus = curriedSum(1)_
+    onePlus(2) should be (3)
   }
 
   "Writing new control structures" should "함수를 받는 함수를 만들면 된다" in {

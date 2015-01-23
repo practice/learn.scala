@@ -221,10 +221,6 @@ class WorkingWithLists extends FlatSpec with Matchers {
   it should "Example: Merge sort" in {
     /**
      * Complexity: order (n log(n))
-     * @param less
-     * @param xs
-     * @tparam T
-     * @return
      */
     def msort[T](less: (T, T) => Boolean)(xs: List[T]): List[T] = {
       def merge(xs: List[T], ys: List[T]): List[T] = {
@@ -252,5 +248,9 @@ class WorkingWithLists extends FlatSpec with Matchers {
     val mixedInts = List(4, 1, 9, 0, 5, 8, 3, 6, 2, 7)
     intSort(mixedInts) should be (List(0, 1, 2, 3, 4, 5, 6, 7, 8, 9))
     reverseIntSort(mixedInts) should be (List(9, 8, 7, 6, 5, 4, 3, 2, 1, 0))
+  }
+
+  "16.7 Higher-order methods on class List" should "" in {
+
   }
 }
